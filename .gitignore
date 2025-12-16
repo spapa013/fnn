@@ -3,6 +3,7 @@
 
 # Deploy
 personal*
+docker-compose.override.yml
 
 # Ignore everything in data/
 data/*
