@@ -11,10 +11,14 @@ from fnn.microns.load import params, units, unit_ids
 from fnn.utils import logging
 
 BASE_URL = "https://bossdb-open-data.s3.amazonaws.com/iarpa_microns/minnie/functional_data/foundation_model/"
-URL = BASE_URL + "foundational_model_weights_and_metadata_v1.zip"
-README_URL = BASE_URL + "readme_v2.md"
+MODEL_FILENAME = "foundational_model_weights_and_metadata_v1.zip"
+MODEL_ORI_FILENAME = "foundation_model_weights_and_metadata_with_ori_training.zip"
+README_FILENAME = "readme_v3.md"
 
-MD5 = "58fcac4b31ad2902c81e339432cec787"
+md5_lookup = {
+    MODEL_FILENAME: "58fcac4b31ad2902c81e339432cec787",
+    MODEL_ORI_FILENAME: "4a6e0d5864c089193ad35db755d737f2",
+}
 
 logger = logging.get_logger(__name__)
 logger.setLevel(logging.INFO)
@@ -54,7 +58,7 @@ def download(url, file_path, chunk_size=8192, verbose=True):
     return md5.hexdigest()
 
 
-def download_data(directory=None, verbose=True):
+def download_data(directory=None, verbose=True, filename=MODEL_FILENAME):
     """
     Parameters
     ----------
@@ -62,19 +66,21 @@ def download_data(directory=None, verbose=True):
         directory for model parameters and metadata. defaults to current working directory
     verbose : bool
         display download progress
+    filename : str
+        name of the model zip file to download
     """
     logger.setLevel(logging.INFO if verbose else logging.WARNING)
     logger.info(f"Downloading model parameters and metadata to `{directory}`")
     with tempfile.TemporaryDirectory() as tmpdir:
         zip_path = os.path.join(tmpdir, "microns.zip")
-
-        md5 = download(URL, zip_path, verbose=verbose)
-        assert md5 == MD5, f"md5 for downloaded file is {md5}, expected {MD5}"
+        md5 = download(BASE_URL + filename, zip_path, verbose=verbose)
+        md5_expected = md5_lookup[filename]
+        assert md5 == md5_expected, f"md5 for downloaded file is {md5}, expected {md5_expected}"
 
         with zipfile.ZipFile(zip_path, "r") as zf:
             zf.extractall(directory)
 
-        _ = download(README_URL, os.path.join(directory, "README.md"), verbose=verbose)
+        _ = download(BASE_URL + README_FILENAME, os.path.join(directory, "README.md"), verbose=verbose)
 
 
 def scan(session, scan_idx, cuda=True, directory=None):
